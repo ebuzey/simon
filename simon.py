@@ -3,10 +3,11 @@
 import sys
 import random
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLabel
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QUrl
 from PyQt5.QtGui import QFont, QColor, QPalette
-# Si usas PyQt5 versiones recientes, es preferible usar QGuiApplication
 from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtMultimedia import QSoundEffect
+import os
 
 class SimonGame(QWidget):
     def __init__(self):
@@ -86,6 +87,29 @@ class SimonGame(QWidget):
         self.message_label.setStyleSheet('color: white')
         self.message_label.setGeometry(50, 270, 200, 20)
 
+        # Inicializar efectos de sonido
+        self.sounds = {}
+        sounds_path = os.path.join(os.path.dirname(__file__), 'sounds')
+
+        sound_files = {
+            'up': 'up.wav',
+            'left': 'left.wav',
+            'right': 'right.wav',
+            'down': 'down.wav',
+            'start': 'start.wav',        # Opcional
+            'game_over': 'game_over.wav' # Opcional
+        }
+
+        for key, file in sound_files.items():
+            sound = QSoundEffect()
+            sound_file_path = os.path.join(sounds_path, file)
+            if os.path.exists(sound_file_path):
+                sound.setSource(QUrl.fromLocalFile(sound_file_path))
+                sound.setVolume(0.5)  # Volumen entre 0.0 y 1.0
+                self.sounds[key] = sound
+            else:
+                print(f"Archivo de sonido no encontrado: {sound_file_path}")
+
     def position_window_bottom_right(self):
         """Posiciona la ventana en la esquina inferior derecha de la pantalla."""
         # Obtener el objeto de pantalla
@@ -120,6 +144,9 @@ class SimonGame(QWidget):
         self.level = 0
         self.score_label.setText(f'Puntuación: {self.level}')
         self.message_label.setText('')
+        # Reproducir sonido de inicio
+        if 'start' in self.sounds:
+            self.sounds['start'].play()
         QTimer.singleShot(500, self.next_round)
 
     def next_round(self):
@@ -148,7 +175,9 @@ class SimonGame(QWidget):
                 color: black;
             }
         """)
-        # Opcional: Reproducir sonido aquí
+        # Reproducir sonido de la tecla
+        if key in self.sounds:
+            self.sounds[key].play()
         QTimer.singleShot(300, lambda: btn.setStyleSheet("""
             QPushButton {
                 background-color: rgba(85, 85, 85, 180);
@@ -178,7 +207,9 @@ class SimonGame(QWidget):
     def game_over(self):
         self.message_label.setText('¡Juego Terminado!')
         self.accepting_input = False
-        # Opcional: Reproducir sonido de error aquí
+        # Reproducir sonido de fin de juego
+        if 'game_over' in self.sounds:
+            self.sounds['game_over'].play()
 
     # Hacer la ventana arrastrable
     def mousePressEvent(self, event):
